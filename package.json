@@ -3,10 +3,14 @@
     "@azure/identity": "^3.0.0",
     "@azure/keyvault-keys": "^4.6.0",
     "@types/node": "^18.11.0",
+    "bn.js": "^5.2.1",
     "dotenv": "^16.0.3",
     "ethereumjs-tx": "^2.1.2",
+    "ethereumjs-util": "^7.1.5",
     "ethers": "^5.7.1",
-    "js-sha3": "^0.8.0"
+    "ethersjs-azure-keyvault-signer": "^2.1.0",
+    "js-sha3": "^0.8.0",
+    "web3": "^1.8.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.40.0",

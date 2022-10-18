@@ -1,42 +1,32 @@
 import * as dotenv from "dotenv";
-import { keccak256 } from "js-sha3";
-import { DefaultAzureCredential } from "@azure/identity";
-import { KeyClient, KeyVaultKey } from "@azure/keyvault-keys";
+import { AzureKeyVaultCredentials, AzureKeyVaultSigner } from "ethersjs-azure-keyvault-signer";
+import { getPublicKey } from "ethersjs-azure-keyvault-signer/dist/util/azure_utils";
+
+import { ethers } from "ethers";
 
 dotenv.config();
 
-const credential = new DefaultAzureCredential();
-
-// Build the URL to reach your key vault
-const vaultName = process.env.AZURE_KEY_VAULT_NAME;
-const url = `https://${vaultName}.vault.azure.net`; // or `https://${vaultName}.managedhsm.azure.net` for managed HSM.
-
-// Lastly, create our keys client and connect to the service
-const client = new KeyClient(url, credential);
-
-const keyName = process.env.AZURE_KEY_NAME;
-
-const derivePublicKey = (bundle: KeyVaultKey) => {
-  const merged = Buffer.alloc(bundle.key.x.length + bundle.key.y.length);
-  merged.set(bundle.key.x);
-  merged.set(bundle.key.y, bundle.key.x.length);
-  return merged;
+const keyVaultCredentials: AzureKeyVaultCredentials = {
+  keyName: process.env.AZURE_KEY_NAME,
+  vaultUrl: `https://${process.env.AZURE_KEY_VAULT_NAME}.vault.azure.net`,
+  tenantId: process.env.AZURE_TENANT_ID,
+  clientId: process.env.AZURE_CLIENT_ID,
+  clientSecret: process.env.AZURE_CLIENT_SECRET,
 };
 
-const getEthereumAddress = (publicKey: Buffer): string => {
-  console.log("Encoded Pub Key: " + publicKey.toString("hex"));
-  const ethereumAddress = keccak256(publicKey.toString("hex"));
-  return "0x" + ethereumAddress.substring(ethereumAddress.length - 40, ethereumAddress.length);
-};
+let azureKeyVaultSigner = new AzureKeyVaultSigner(keyVaultCredentials);
+
+const provider = ethers.providers.getDefaultProvider("goerli");
+azureKeyVaultSigner = azureKeyVaultSigner.connect(provider);
 
 async function main() {
-  const latestKey = await client.getKey(keyName);
-  console.log(`Latest version of the key ${keyName}: `, latestKey);
-
-  const pubKey = derivePublicKey(latestKey);
-  console.log(pubKey);
-  const address = getEthereumAddress(pubKey);
-  console.log("Derived Ethereum address of HSM key", address, `https://goerli.etherscan.io/address/${address}`);
+  console.log("Public key from Key Vault or Cloud HSM:", await getPublicKey(keyVaultCredentials));
+  console.log("Derived Ethereum address from public key:", await azureKeyVaultSigner.getAddress());
+  const tx = await azureKeyVaultSigner.sendTransaction({
+    to: "0x00000000219ab540356cbb839cbe05303d7705fa",
+    value: 10000,
+  });
+  console.log(tx);
 }
 
 main();
