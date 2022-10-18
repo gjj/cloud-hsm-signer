@@ -1,7 +1,6 @@
 import * as dotenv from "dotenv";
 import { AzureKeyVaultCredentials, AzureKeyVaultSigner } from "ethersjs-azure-keyvault-signer";
 import { getPublicKey } from "ethersjs-azure-keyvault-signer/dist/util/azure_utils";
-
 import { ethers } from "ethers";
 
 dotenv.config();
@@ -24,7 +23,7 @@ async function main() {
   console.log("Derived Ethereum address from public key:", await azureKeyVaultSigner.getAddress());
   const tx = await azureKeyVaultSigner.sendTransaction({
     to: "0x00000000219ab540356cbb839cbe05303d7705fa",
-    value: 10000,
+    value: 1000000000000000,
   });
   console.log(tx);
 }
